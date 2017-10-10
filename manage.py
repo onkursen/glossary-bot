@@ -17,9 +17,11 @@ manager = Manager(app)
 migrate = Migrate(app, db)
 manager.add_command('db', MigrateCommand)
 
+
 @manager.shell
 def make_shell_context():
     return dict(app=app, db=db, Definition=Definition, Interaction=Interaction)
+
 
 @manager.command
 def runtests():
@@ -27,14 +29,17 @@ def runtests():
     tests = unittest.TestLoader().discover('tests')
     unittest.TextTestRunner(verbosity=1).run(tests)
 
+
 @manager.command
 def dropdb():
     if prompt_bool("Are you sure you want to lose all your data?"):
         db.drop_all()
 
+
 @manager.command
 def createdb():
     db.create_all()
+
 
 if __name__ == '__main__':
     manager.run()

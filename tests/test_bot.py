@@ -7,6 +7,7 @@ from flask import current_app
 from gloss.models import Definition, Interaction
 from tests.test_base import TestBase
 
+
 class TestBot(TestBase):
 
     def setUp(self):
@@ -34,10 +35,12 @@ class TestBot(TestBase):
         ''' A definition set via a POST is recorded in the database
         '''
         robo_response = self.post_command(text="EW = Eligibility Worker")
-        self.assertTrue("has set the definition".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "has set the definition".encode('utf-8') in robo_response.data)
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
         self.assertEqual(definition_check.definition, "Eligibility Worker")
@@ -45,11 +48,14 @@ class TestBot(TestBase):
     def test_set_definition_with_lots_of_whitespace(self):
         ''' Excess whitespace is trimmed when parsing the set command.
         '''
-        robo_response = self.post_command(text="     EW   =    Eligibility      Worker  ")
-        self.assertTrue("has set the definition".encode('utf-8') in robo_response.data)
+        robo_response = self.post_command(
+            text="     EW   =    Eligibility      Worker  ")
+        self.assertTrue(
+            "has set the definition".encode('utf-8') in robo_response.data)
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
         self.assertEqual(definition_check.definition, "Eligibility Worker")
@@ -58,110 +64,142 @@ class TestBot(TestBase):
         ''' A set with multiple equals signs considers all equals signs after
             the first to be part of the definition
         '''
-        robo_response = self.post_command(text="EW = Eligibility Worker = Cool Person=Yeah")
-        self.assertTrue("has set the definition".encode('utf-8') in robo_response.data)
+        robo_response = self.post_command(
+            text="EW = Eligibility Worker = Cool Person=Yeah")
+        self.assertTrue(
+            "has set the definition".encode('utf-8') in robo_response.data)
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
-        self.assertEqual(definition_check.definition, "Eligibility Worker = Cool Person=Yeah")
+        self.assertEqual(
+            definition_check.definition,
+            "Eligibility Worker = Cool Person=Yeah")
 
     def test_reset_definition(self):
         ''' Setting a definition for an existing term overwrites the original
         '''
         robo_response = self.post_command(text="EW = Eligibility Worker")
-        self.assertTrue("has set the definition".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "has set the definition".encode('utf-8') in robo_response.data)
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
         self.assertEqual(definition_check.definition, "Eligibility Worker")
 
         robo_response = self.post_command(text="EW = Egg Weathervane")
-        self.assertTrue("overwriting the previous entry".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "overwriting the previous entry".encode('utf-8')
+            in robo_response.data)
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
         self.assertEqual(definition_check.definition, "Egg Weathervane")
 
     def test_set_same_word_with_different_capitalization(self):
-        ''' We can't set different definitions for the same word by using different cases
+        ''' We can't set different definitions for the same word by
+            using different cases
         '''
         robo_response = self.post_command(text="lower case = NOT UPPER CASE")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("has set the definition".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "has set the definition".encode('utf-8') in robo_response.data)
 
         filter = Definition.term == "lower case"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "lower case")
         self.assertEqual(definition_check.definition, "NOT UPPER CASE")
 
-        robo_response = self.post_command(text="LOWER CASE = really not upper case")
+        robo_response = self.post_command(
+            text="LOWER CASE = really not upper case")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("overwriting the previous entry".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "overwriting the previous entry".encode('utf-8')
+            in robo_response.data)
 
         robo_response = self.post_command(text="shh lower case")
-        self.assertTrue("LOWER CASE: really not upper case".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "LOWER CASE: really not upper case".encode('utf-8')
+            in robo_response.data)
 
     def test_set_identical_definition(self):
-        ''' Correct response for setting an identical definition for an existing term
+        ''' Correct response for setting an identical definition for an
+            existing term
         '''
         robo_response = self.post_command(text="EW = Eligibility Worker")
-        self.assertTrue("has set the definition".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "has set the definition".encode('utf-8')
+            in robo_response.data)
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
         self.assertEqual(definition_check.definition, "Eligibility Worker")
 
         robo_response = self.post_command(text="EW = Eligibility Worker")
-        self.assertTrue("already knows that the definition for".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "already knows that the definition for".encode('utf-8')
+            in robo_response.data)
 
     def test_set_command_word_definitions(self):
         ''' We can successfully set definitions for unreserved command words.
         '''
         robo_response = self.post_command(text="SHH = Sonic Hedge Hog")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("has set the definition".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "has set the definition".encode('utf-8') in robo_response.data)
 
         filter = Definition.term == "SHH"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "SHH")
         self.assertEqual(definition_check.definition, "Sonic Hedge Hog")
 
         robo_response = self.post_command(text="SSH = Secure SHell")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("has set the definition".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "has set the definition".encode('utf-8') in robo_response.data)
 
         filter = Definition.term == "SSH"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "SSH")
         self.assertEqual(definition_check.definition, "Secure SHell")
 
         robo_response = self.post_command(text="Delete = Remove or Obliterate")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("has set the definition".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "has set the definition".encode('utf-8') in robo_response.data)
 
         filter = Definition.term == "Delete"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "Delete")
         self.assertEqual(definition_check.definition, "Remove or Obliterate")
 
         robo_response = self.post_command(text="help me = I'm in hell")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("has set the definition".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "has set the definition".encode('utf-8') in robo_response.data)
 
         filter = Definition.term == "help me"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "help me")
         self.assertEqual(definition_check.definition, "I'm in hell")
@@ -171,19 +209,27 @@ class TestBot(TestBase):
         '''
         robo_response = self.post_command(text="Stats = Statistics")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("because it's a reserved term".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "because it's a reserved term".encode('utf-8')
+            in robo_response.data)
 
         robo_response = self.post_command(text="help = aid")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("because it's a reserved term".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "because it's a reserved term".encode('utf-8')
+            in robo_response.data)
 
         robo_response = self.post_command(text="LeArNiNgS = recently")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("because it's a reserved term".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "because it's a reserved term".encode('utf-8')
+            in robo_response.data)
 
         robo_response = self.post_command(text="? = riddle me this")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("because it's a reserved term".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "because it's a reserved term".encode('utf-8')
+            in robo_response.data)
 
     @responses.activate
     def test_get_definition(self):
@@ -193,7 +239,8 @@ class TestBot(TestBase):
         self.post_command(text="EW = Eligibility Worker")
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
         self.assertEqual(definition_check.definition, "Eligibility Worker")
@@ -238,13 +285,15 @@ class TestBot(TestBase):
 
     @responses.activate
     def test_get_definition_with_special_characters(self):
-        ''' We can succesfully set and get a definition with special characters from the bot
+        ''' We can succesfully set and get a definition with special
+            characters from the bot
         '''
         # set & test a definition
         self.post_command(text="EW = ™¥∑ø∂∆∫")
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
         self.assertEqual(definition_check.definition, "™¥∑ø∂∆∫")
@@ -292,7 +341,8 @@ class TestBot(TestBase):
         '''
         # send a POST to the bot to request the definition
         robo_response = self.post_command(text="EW")
-        self.assertTrue("has no definition for".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "has no definition for".encode('utf-8') in robo_response.data)
 
         # the request was recorded in the interactions table
         interaction_check = self.db.session.query(Interaction).first()
@@ -309,10 +359,12 @@ class TestBot(TestBase):
         self.post_command(text="EW = http://example.com/ew.gif")
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
-        self.assertEqual(definition_check.definition, "http://example.com/ew.gif")
+        self.assertEqual(
+            definition_check.definition, "http://example.com/ew.gif")
 
         # set a fake Slack webhook URL
         fake_webhook_url = 'http://webhook.example.com/'
@@ -354,10 +406,17 @@ class TestBot(TestBase):
         original_term = "Glossary Bot"
         first_alias = "Gloss Bot"
         second_alias = "Glossbot"
-        definition = "A Slack bot that maintains a glossary of terms created by its users, and responds to requests with definitions."
-        self.post_command(text="{original_term} = {definition}".format(**locals()))
-        self.post_command(text="{first_alias} = see {original_term}".format(**locals()))
-        self.post_command(text="{second_alias} = see also {original_term}".format(**locals()))
+        definition = (
+            "A Slack bot that maintains a glossary of terms created by its "
+            "users, and responds to requests with definitions."
+        )
+        self.post_command(
+            text="{original_term} = {definition}".format(**locals()))
+        self.post_command(
+            text="{first_alias} = see {original_term}".format(**locals()))
+        self.post_command(
+            text="{second_alias} = see also {original_term}".format(**locals())
+        )
 
         # set a fake Slack webhook URL
         fake_webhook_url = 'http://webhook.example.com/'
@@ -411,16 +470,20 @@ class TestBot(TestBase):
         self.post_command(text="EW = Eligibility Worker")
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
         self.assertEqual(definition_check.definition, "Eligibility Worker")
 
         # now delete the value and verify that it's gone
         robo_response = self.post_command(text="delete EW")
-        self.assertTrue("has deleted the definition for".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "has deleted the definition for".encode('utf-8')
+            in robo_response.data)
 
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNone(definition_check)
 
     @responses.activate
@@ -455,7 +518,8 @@ class TestBot(TestBase):
         self.assertIsNotNone(attachment['title'])
         self.assertTrue("I have definitions for 1 term" in attachment['text'])
         self.assertTrue("1 person has defined terms" in attachment['text'])
-        self.assertTrue("I've been asked for definitions 1 time" in attachment['text'])
+        self.assertTrue(
+            "I've been asked for definitions 1 time" in attachment['text'])
         self.assertIsNotNone(attachment['color'])
         self.assertIsNotNone(attachment['fallback'])
 
@@ -492,7 +556,8 @@ class TestBot(TestBase):
         self.assertIsNotNone(attachment['title'])
         self.assertTrue("I don't have any definitions" in attachment['text'])
         self.assertTrue("Nobody has defined terms" in attachment['text'])
-        self.assertTrue("Nobody has asked me for definitions" in attachment['text'])
+        self.assertTrue(
+            "Nobody has asked me for definitions" in attachment['text'])
         self.assertIsNotNone(attachment['color'])
         self.assertIsNotNone(attachment['fallback'])
 
@@ -508,7 +573,9 @@ class TestBot(TestBase):
         # set some values in the database
         letters = ["K", "L", "M", "N", "Ó", "P", "Q", "R", "S", "T", "U", "V"]
         for letter in letters:
-            self.post_command(text="{letter}W = {letter}ligibility Worker".format(letter=letter))
+            self.post_command(text=(
+                "{letter}W = {letter}ligibility Worker".format(letter=letter))
+            )
 
         # set a fake Slack webhook URL
         fake_webhook_url = 'http://webhook.example.com/'
@@ -533,7 +600,8 @@ class TestBot(TestBase):
         self.assertIsNotNone(attachment)
         self.assertIsNotNone(attachment['title'])
 
-        self.assertTrue("I recently learned definitions for" in attachment['text'])
+        self.assertTrue(
+            "I recently learned definitions for" in attachment['text'])
         self.assertTrue("KW" in attachment['text'])
         self.assertTrue("LW" in attachment['text'])
         self.assertTrue("MW" in attachment['text'])
@@ -558,9 +626,13 @@ class TestBot(TestBase):
         ''' Learnings are returned in random order when requested
         '''
         # set some values in the database
-        letters = ["E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S"]
+        letters = [
+            "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P",
+            "Q", "R", "S"]
         for letter in letters:
-            self.post_command(text="{letter}W = {letter}ligibility Worker".format(letter=letter))
+            self.post_command(text=(
+                "{letter}W = {letter}ligibility Worker".format(letter=letter))
+            )
 
         # get chronological learnings
         robo_response = self.post_command(text="shh learnings")
@@ -581,16 +653,21 @@ class TestBot(TestBase):
         random3 = robo_response.data
 
         # if they're all equal, we've failed
-        self.assertFalse(control == random1 and control == random2 and control == random3)
+        self.assertFalse(
+            control == random1 and control == random2 and control == random3)
 
     def test_alphabetical_learnings(self):
         ''' Learnings are returned in random order when requested
         '''
         # set some values in the database
-        letters = ["E", "G", "I", "K", "M", "O", "Q", "S", "R", "P", "N", "L", "J", "H", "F"]
+        letters = [
+            "E", "G", "I", "K", "M", "O", "Q", "S", "R", "P", "N", "L", "J",
+            "H", "F"]
         check = []
         for letter in letters:
-            self.post_command(text="{letter}W = {letter}ligibility Worker".format(letter=letter))
+            self.post_command(text=(
+                "{letter}W = {letter}ligibility Worker".format(letter=letter))
+            )
             check.insert(0, "{}W".format(letter))
 
         desc_check = check[:12]
@@ -601,20 +678,26 @@ class TestBot(TestBase):
         # get chronological learnings
         robo_response = self.post_command(text="shh learnings")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue(", ".join(desc_check).encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            ", ".join(desc_check).encode('utf-8') in robo_response.data)
 
         # get alphabetical learnings
         robo_response = self.post_command(text="shh learnings alpha")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue(", ".join(alpha_check).encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            ", ".join(alpha_check).encode('utf-8') in robo_response.data)
 
     def test_random_offset_learnings(self):
         ''' An offset group of learnings are returned randomized
         '''
         # set some values in the database
-        letters = ["E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S"]
+        letters = [
+            "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q",
+            "R", "S"]
         for letter in letters:
-            self.post_command(text="{letter}W = {letter}ligibility Worker".format(letter=letter))
+            self.post_command(text=(
+                "{letter}W = {letter}ligibility Worker".format(letter=letter))
+            )
 
         # get chronological learnings
         robo_response = self.post_command(text="shh learnings 7 4")
@@ -639,7 +722,8 @@ class TestBot(TestBase):
         random3 = robo_response.data
 
         # if they're all equal, we've failed
-        self.assertFalse(control == random1 and control == random2 and control == random3)
+        self.assertFalse(
+            control == random1 and control == random2 and control == random3)
         # but they should all have the same elements
         for term in check_terms:
             self.assertTrue(term.encode('utf-8') in random1)
@@ -650,10 +734,14 @@ class TestBot(TestBase):
         ''' All learnings are returned when requested
         '''
         # set some values in the database
-        letters = ["E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X"]
+        letters = [
+            "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q",
+            "R", "S", "T", "U", "V", "W", "X"]
         check = []
         for letter in letters:
-            self.post_command(text="{letter}W = {letter}ligibility Worker".format(letter=letter))
+            self.post_command(text=(
+                "{letter}W = {letter}ligibility Worker".format(letter=letter))
+            )
             check.insert(0, "{}W".format(letter))
 
         # get all learnings
@@ -678,15 +766,21 @@ class TestBot(TestBase):
         ''' Only a few learnings are returned when requested
         '''
         # set some values in the database
-        letters = ["E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X"]
+        letters = [
+            "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q",
+            "R", "S", "T", "U", "V", "W", "X"]
         for letter in letters:
-            self.post_command(text="{letter}W = {letter}ligibility Worker".format(letter=letter))
+            self.post_command(text=(
+                "{letter}W = {letter}ligibility Worker".format(letter=letter))
+            )
 
         limit = 7
-        check = ["{}W".format(item) for item in list(reversed(letters[-limit:]))]
+        check = [
+            "{}W".format(item) for item in list(reversed(letters[-limit:]))]
 
         # get some learnings
-        robo_response = self.post_command(text="shh learnings {}".format(limit))
+        robo_response = self.post_command(
+            text="shh learnings {}".format(limit))
         self.assertEqual(robo_response.status_code, 200)
         self.assertTrue(", ".join(check).encode('utf-8') in robo_response.data)
 
@@ -694,16 +788,23 @@ class TestBot(TestBase):
         ''' An offset of learnings are returned when requested
         '''
         # set some values in the database
-        letters = ["E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X"]
+        letters = [
+            "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q",
+            "R", "S", "T", "U", "V", "W", "X"]
         for letter in letters:
-            self.post_command(text="{letter}W = {letter}ligibility Worker".format(letter=letter))
+            self.post_command(text=(
+                "{letter}W = {letter}ligibility Worker".format(letter=letter))
+            )
 
         limit = 7
         offset = 11
-        check = ["{}W".format(item) for item in list(reversed(letters[-(limit + offset):-offset]))]
+        check = [
+            "{}W".format(item) for item in
+            list(reversed(letters[-(limit + offset):-offset]))]
 
         # get some learnings
-        robo_response = self.post_command(text="shh learnings {} {}".format(limit, offset))
+        robo_response = self.post_command(
+            text="shh learnings {} {}".format(limit, offset))
         self.assertEqual(robo_response.status_code, 200)
         self.assertTrue(", ".join(check).encode('utf-8') in robo_response.data)
 
@@ -713,19 +814,25 @@ class TestBot(TestBase):
         # ask for recent definitions before any have been set
         robo_response = self.post_command(text="shh learnings")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("I haven't learned any definitions yet.".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "I haven't learned any definitions yet.".encode('utf-8')
+            in robo_response.data)
 
         # when one value has been set
         self.post_command(text="EW = Eligibility Worker")
         robo_response = self.post_command(text="shh learnings")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("I recently learned the definition for".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "I recently learned the definition for".encode('utf-8')
+            in robo_response.data)
 
         # when more than one value has been set
         self.post_command(text="FW = Fligibility Worker")
         robo_response = self.post_command(text="shh learnings")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("I recently learned definitions for".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "I recently learned definitions for".encode('utf-8')
+            in robo_response.data)
 
     def test_learnings_alternate_command(self):
         ''' Learnings are returned when sending the 'recent' command.
@@ -733,19 +840,25 @@ class TestBot(TestBase):
         # ask for recent definitions before any have been set
         robo_response = self.post_command(text="shh recent")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("I haven't learned any definitions yet.".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "I haven't learned any definitions yet.".encode('utf-8')
+            in robo_response.data)
 
         # when one value has been set
         self.post_command(text="EW = Eligibility Worker")
         robo_response = self.post_command(text="shh recent")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("I recently learned the definition for".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "I recently learned the definition for".encode('utf-8')
+            in robo_response.data)
 
         # when more than one value has been set
         self.post_command(text="FW = Fligibility Worker")
         robo_response = self.post_command(text="shh recent")
         self.assertEqual(robo_response.status_code, 200)
-        self.assertTrue("I recently learned definitions for".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "I recently learned definitions for".encode('utf-8')
+            in robo_response.data)
 
     @responses.activate
     def test_learnings_alternate_command_echoed(self):
@@ -766,7 +879,9 @@ class TestBot(TestBase):
         # test the captured post payload
         payload = json.loads(responses.calls[0].request.body)
         self.assertIsNotNone(payload['text'])
-        self.assertTrue("gloss {action}".format(action=alternate_action) in payload['text'])
+        self.assertTrue(
+            "gloss {action}".format(action=alternate_action)
+            in payload['text'])
 
         # delete the fake Slack webhook URL
         del(current_app.config['SLACK_WEBHOOK_URL'])
@@ -778,40 +893,57 @@ class TestBot(TestBase):
         '''
         # testing different chunks of help text with each response
         robo_response = self.post_command(text="help")
-        self.assertTrue("to show the definition for a term".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "to show the definition for a term".encode('utf-8')
+            in robo_response.data)
 
         robo_response = self.post_command(text="?")
-        self.assertTrue("to set the definition for a term".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "to set the definition for a term".encode('utf-8')
+            in robo_response.data)
 
         robo_response = self.post_command(text="")
-        self.assertTrue("to delete the definition for a term".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "to delete the definition for a term".encode('utf-8')
+            in robo_response.data)
 
         robo_response = self.post_command(text=" ")
-        self.assertTrue("to see this message".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "to see this message".encode('utf-8')
+            in robo_response.data)
 
     def test_custom_slash_command_for_private_requests(self):
         ''' A slash command other than /gloss is echoed in the bot's response
         '''
         test_command = "/gg"
         # the help command
-        robo_response = self.post_command(text="help", slash_command=test_command)
-        self.assertTrue("*{}".format(test_command).encode('utf-8') in robo_response.data)
+        robo_response = self.post_command(
+            text="help", slash_command=test_command)
+        self.assertTrue(
+            "*{}".format(test_command).encode('utf-8') in robo_response.data)
         self.assertFalse("*/gloss".encode('utf-8') in robo_response.data)
 
         # ask for a definition that doesn't exist
-        robo_response = self.post_command(text="shh EW", slash_command=test_command)
-        self.assertTrue("*{}".format(test_command).encode('utf-8') in robo_response.data)
+        robo_response = self.post_command(
+            text="shh EW", slash_command=test_command)
+        self.assertTrue(
+            "*{}".format(test_command).encode('utf-8') in robo_response.data)
         self.assertFalse("*/gloss".encode('utf-8') in robo_response.data)
 
         # get a definition that does exist
-        self.post_command(text="EW = Eligibility Worker", slash_command=test_command)
-        robo_response = self.post_command(text="shh EW", slash_command=test_command)
-        self.assertTrue("{}".format(test_command).encode('utf-8') in robo_response.data)
+        self.post_command(
+            text="EW = Eligibility Worker", slash_command=test_command)
+        robo_response = self.post_command(
+            text="shh EW", slash_command=test_command)
+        self.assertTrue(
+            "{}".format(test_command).encode('utf-8') in robo_response.data)
         self.assertFalse("/gloss".encode('utf-8') in robo_response.data)
 
         # get the error message for a bogus set
-        robo_response = self.post_command(text="AW =", slash_command=test_command)
-        self.assertTrue("*{}".format(test_command).encode('utf-8') in robo_response.data)
+        robo_response = self.post_command(
+            text="AW =", slash_command=test_command)
+        self.assertTrue(
+            "*{}".format(test_command).encode('utf-8') in robo_response.data)
         self.assertFalse("*/gloss".encode('utf-8') in robo_response.data)
 
     @responses.activate
@@ -837,7 +969,8 @@ class TestBot(TestBase):
         # test the captured post payload
         payload = json.loads(responses.calls[0].request.body)
         self.assertIsNotNone(payload['text'])
-        self.assertTrue("{command} stats".format(command=test_command) in payload['text'])
+        self.assertTrue(
+            "{command} stats".format(command=test_command) in payload['text'])
 
         # delete the fake Slack webhook URL
         del(current_app.config['SLACK_WEBHOOK_URL'])
@@ -866,7 +999,8 @@ class TestBot(TestBase):
         # test the captured post payload
         payload = json.loads(responses.calls[0].request.body)
         self.assertIsNotNone(payload['text'])
-        self.assertTrue("{command} EW".format(command=test_command) in payload['text'])
+        self.assertTrue(
+            "{command} EW".format(command=test_command) in payload['text'])
 
         # delete the fake Slack webhook URL
         del(current_app.config['SLACK_WEBHOOK_URL'])
@@ -893,7 +1027,9 @@ class TestBot(TestBase):
         # test the captured post payload
         payload = json.loads(responses.calls[0].request.body)
         self.assertIsNotNone(payload['text'])
-        self.assertTrue("{command} learnings".format(command=test_command) in payload['text'])
+        self.assertTrue(
+            "{command} learnings".format(command=test_command)
+            in payload['text'])
 
         # delete the fake Slack webhook URL
         del(current_app.config['SLACK_WEBHOOK_URL'])
@@ -907,7 +1043,8 @@ class TestBot(TestBase):
         self.post_command(text="EW = Eligibility Worker")
 
         filter = Definition.term == "EW"
-        definition_check = self.db.session.query(Definition).filter(filter).first()
+        definition_check = (
+            self.db.session.query(Definition).filter(filter).first())
         self.assertIsNotNone(definition_check)
         self.assertEqual(definition_check.term, "EW")
         self.assertEqual(definition_check.definition, "Eligibility Worker")
@@ -915,16 +1052,22 @@ class TestBot(TestBase):
         # send a POST to the bot to request the quiet definition
         robo_response = self.post_command(text="shh EW")
         self.assertTrue("glossie".encode('utf-8') in robo_response.data)
-        self.assertTrue("EW: Eligibility Worker".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "EW: Eligibility Worker".encode('utf-8')
+            in robo_response.data)
 
         # send POSTs with variations of 'shh' to make sure that they're caught
         robo_response = self.post_command(text="ssh EW")
         self.assertTrue("glossie".encode('utf-8') in robo_response.data)
-        self.assertTrue("EW: Eligibility Worker".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "EW: Eligibility Worker".encode('utf-8')
+            in robo_response.data)
 
         robo_response = self.post_command(text="sh EW")
         self.assertTrue("glossie".encode('utf-8') in robo_response.data)
-        self.assertTrue("EW: Eligibility Worker".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "EW: Eligibility Worker".encode('utf-8')
+            in robo_response.data)
 
         # at least one request was recorded in the interactions table
         interaction_check = self.db.session.query(Interaction).first()
@@ -937,13 +1080,19 @@ class TestBot(TestBase):
         ''' We get the right error back when sending bad set commands
         '''
         robo_response = self.post_command(text="EW =")
-        self.assertTrue("You can set definitions like this".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "You can set definitions like this".encode('utf-8')
+            in robo_response.data)
 
         robo_response = self.post_command(text="=")
-        self.assertTrue("You can set definitions like this".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "You can set definitions like this".encode('utf-8')
+            in robo_response.data)
 
         robo_response = self.post_command(text="= = =")
-        self.assertTrue("You can set definitions like this".encode('utf-8') in robo_response.data)
+        self.assertTrue(
+            "You can set definitions like this".encode('utf-8')
+            in robo_response.data)
 
     @responses.activate
     def test_bad_image_urls_rejected(self):
@@ -998,6 +1147,7 @@ class TestBot(TestBase):
         del(current_app.config['SLACK_WEBHOOK_URL'])
         # reset the mock
         responses.reset()
+
 
 if __name__ == '__main__':
     unittest.main()

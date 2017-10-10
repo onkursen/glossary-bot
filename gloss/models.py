@@ -2,6 +2,7 @@ from . import db
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from datetime import datetime
 
+
 class Definition(db.Model):
     ''' Records of term definitions, along with some metadata
     '''
@@ -16,6 +17,7 @@ class Definition(db.Model):
 
     def __repr__(self):
         return '<Term: {}, Definition: {}>'.format(self.term, self.definition)
+
 
 class Interaction(db.Model):
     ''' Records of interactions with Glossary Bot

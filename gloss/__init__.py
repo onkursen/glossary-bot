@@ -1,8 +1,10 @@
 from flask import Blueprint, Flask
 from flask_sqlalchemy import SQLAlchemy
 
+
 gloss = Blueprint('gloss', __name__)
 db = SQLAlchemy()
+
 
 def create_app(environ):
     app = Flask(__name__)
@@ -17,4 +19,5 @@ def create_app(environ):
     app.register_blueprint(gloss)
     return app
 
-from . import views, errors
+
+from . import views, errors  # noqa: E402,F401
